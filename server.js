@@ -19,7 +19,24 @@ app.use(function(req, res, next) {
  * DATABASE *
  ************/
 
-// const db = require('./models');
+const db = require('./models');
+
+// Profile Endpoint PART 2
+const profile = [
+  {
+    name: "Lou",
+    githubUsername: "gitname",
+    githubLink: "www.github.com",
+    githubProfileImage: "www.img.com",
+    personalSiteLink: "www.personalside.com",
+    currentCity: "cityName",
+    pets: {
+        name: "Choco",
+        type: "Dog",
+        breed: "Boxer"
+    }
+  }
+];
 
 /**********
  * ROUTES *
@@ -42,22 +59,90 @@ app.get('/', function homepage(req, res) {
  * JSON API Endpoints
  */
 
+ // Documented API Endpoints PART 1
 app.get('/api', (req, res) => {
   // TODO: Document all your api endpoints below as a simple hardcoded JSON object.
   // It would be seriously overkill to save any of this to your database.
   // But you should change almost every line of this response.
   res.json({
-    woopsIForgotToDocumentAllMyEndpoints: true, // CHANGE ME ;)
+    woopsIForgotToDocumentAllMyEndpoints: false, 
     message: "Welcome to my personal api! Here's what you need to know!",
-    documentationUrl: "https://github.com/example-username/express-personal-api/README.md", // CHANGE ME
-    baseUrl: "http://YOUR-APP-NAME.herokuapp.com", // CHANGE ME
+    documentationUrl: "https://github.com/example-username/express-personal-api/README.md", // CHANGE ME  
+    baseUrl: "https://mysterious-plains-17292.herokuapp.com/", 
     endpoints: [
       {method: "GET", path: "/api", description: "Describes all available endpoints"},
-      {method: "GET", path: "/api/profile", description: "Data about me"}, // CHANGE ME
-      {method: "POST", path: "/api/campsites", description: "E.g. Create a new campsite"} // CHANGE ME
+      {method: "GET", path: "/api/profile", description: "About me and professional profile"}, 
+      {method: "GET", path: "/api/books", description: "Get all books"}, 
+      {method: "POST", path: "/api/books", description: "Create a new book"}, 
+      {method: "PUT", path: "/api/books/:id", description: "Update a book"},
+      {method: "DELETE", path: "/api/books/:id", description: "Delete a book"} 
     ]
   })
 });
+
+app.get('/api/profile', (req, res) => {
+  res.json(profile);
+});
+
+app.get('/api/books', function (req, res) {
+  db.Books.find({}, function(error, books) {
+    res.json(books);
+  }); 
+});
+
+app.get('/api/books/:id', function (req, res) {
+  db.Books.find({_id: req.params.id}, function(error, books) {
+    res.json(books);
+  }); 
+});
+
+app.post('/api/books', (req, res) => {
+  var newBook = new db.Books({
+    title: req.body.title,
+    author: req.body.author,
+    image: req.body.image,
+    releaseDate: req.body.releaseDate,
+    characters: req.body.characters
+  });
+  newBook.save((error, book) => {
+    console.log(newBook);
+    
+    res.json(book);
+  });
+});
+
+// update book
+app.put('/api/books/:id', function(req,res){
+// get book id from url params (`req.params`)
+  console.log('books update', req.params);
+  console.log(`the body is${req.body}`);
+  const bookId = req.params.id;
+  // find the index of the book we want to remove
+  db.Books.findOneAndUpdate(
+    {_id:bookId},
+    req.body,
+    {new: true},
+    (err, updatedBook) => {
+      if(err) {throw err;}
+      res.json(updatedBook);
+    });
+
+});
+
+// delete book
+app.delete('/api/books/:id', function (req, res) {
+  // get book id from url params (`req.params`)
+  
+  const bookId = req.params.id;
+  console.log('books delete', bookId);
+  // find the index of the book we want to remove
+  //used to connect to database
+  db.Books.findOneAndDelete({_id: bookId}, (err, deletedBook) => {
+    if(err) { throw err; }
+    res.json(deletedBook);
+  });
+});
+
 
 /**********
  * SERVER *
@@ -67,3 +152,6 @@ app.get('/api', (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log('Express server is up and running on http://localhost:3000/');
 });
+
+
+
